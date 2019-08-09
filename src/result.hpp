@@ -6,6 +6,8 @@
 #include <cassert>
 #include <functional>
 
+#include "option.hpp"
+
 template<typename T>
 class Ok {
 public:
@@ -43,11 +45,11 @@ public:
     Result(const Result<T>&) = delete;
 
     Result(Result<T>&& other) 
-#ifndef RESULT_MULTIPLE_MOVE
+#ifndef RESULT_OPTION_MULTIPLE_MOVE
     : moved_out_(false) 
 #endif 
     {
-#ifndef RESULT_MULTIPLE_MOVE
+#ifndef RESULT_OPTION_MULTIPLE_MOVE
         assert(!other.moved_out_);
 #endif
         if (other.is_ok_) {
@@ -60,13 +62,13 @@ public:
     }
 
     Result(Ok<T>&& value) : ok_(std::move(value.value_)), is_ok_(true)
-#ifndef RESULT_MULTIPLE_MOVE
+#ifndef RESULT_OPTION_MULTIPLE_MOVE
     , moved_out_(false)
 #endif 
     {}
 
     Result(Err&& value) : err_(std::move(value.value_)), is_ok_(false)
-#ifndef RESULT_MULTIPLE_MOVE
+#ifndef RESULT_OPTION_MULTIPLE_MOVE
     , moved_out_(false)
 #endif 
     {}
@@ -80,7 +82,7 @@ public:
 
     T ok() {
         assert(is_ok_);
-#ifndef RESULT_MULTIPLE_MOVE
+#ifndef RESULT_OPTION_MULTIPLE_MOVE
         assert(!moved_out_);
         moved_out_ = true;
 #endif
@@ -90,7 +92,7 @@ public:
 
     std::string err() {
         assert(!is_ok_);
-#ifndef RESULT_MULTIPLE_MOVE
+#ifndef RESULT_OPTION_MULTIPLE_MOVE
         assert(!moved_out_);
         moved_out_ = true;
 #endif
@@ -100,7 +102,7 @@ public:
 
     template<typename U>
     Result<U> map(std::function<U(T)> f) {
-#ifndef RESULT_MULTIPLE_MOVE
+#ifndef RESULT_OPTION_MULTIPLE_MOVE
         assert(!moved_out_);
         moved_out_ = true;
 #endif
@@ -113,7 +115,7 @@ public:
 
     template<typename U>
     Result<U> and_then(std::function<Result<U>(T)> f) {
-#ifndef RESULT_MULTIPLE_MOVE
+#ifndef RESULT_OPTION_MULTIPLE_MOVE
         assert(!moved_out_);
         moved_out_ = true;
 #endif
@@ -122,6 +124,29 @@ public:
             return f(std::move(ok_));
         else
             return Err(std::move(err_));
+    }
+
+    Option<T> ok_opt() {
+        if (!is_ok_)
+            return None();
+
+#ifndef RESULT_OPTION_MULTIPLE_MOVE
+        assert(!moved_out_);
+        moved_out_ = true;
+#endif
+        return Some(std::move(ok_));
+    }
+
+    
+    Option<std::string> err_opt() {
+        if (is_ok_)
+            return None();
+
+#ifndef RESULT_OPTION_MULTIPLE_MOVE
+        assert(!moved_out_);
+        moved_out_ = true;
+#endif
+        return Some(std::move(err_));
     }
 
     bool is_ok() const {
@@ -147,7 +172,7 @@ private:
     };
 
     bool is_ok_;
-#ifndef RESULT_MULTIPLE_MOVE
+#ifndef RESULT_OPTION_MULTIPLE_MOVE
     bool moved_out_;
 #endif
 };
