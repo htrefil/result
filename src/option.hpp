@@ -31,6 +31,11 @@ public:
 #endif
     {}
 
+    ~Option() {
+        if (is_some_)
+            value_.~T();
+    }
+
     Option(Some&& value) : value_(value.value_), is_some_(true)
 #ifndef RESULT_OPTION_MULTIPLE_MOVE
     , moved_out_(false)
